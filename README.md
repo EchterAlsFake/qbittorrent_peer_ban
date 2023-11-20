@@ -22,7 +22,7 @@ This Python script is designed to automatically ban peers in qBitTorrent who are
 
 # Downloads
 
-The script is also available in binary for x64 Linux / Windows and can be downloaded in the [releases](https://github.com/EchterAlsFake/qbittorrent_peer_ban)
+The script is also available in binary for x64 Linux / Windows and can be downloaded in the [releases](https://github.com/EchterAlsFake/qbittorrent_peer_ban/releases/tag/1.0)
 
 
 
