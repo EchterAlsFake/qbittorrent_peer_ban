@@ -2,14 +2,14 @@
 
 # Table of Contents
 
-[Prerequisites](#prerequisites)
-[Configuration](#configuration)
-[Usage](#usage)
-[Downloads](#downloads)
-[Building from source]
-[Different qBittorrent versions](#notes-on-qbittorrent-versions)
-[License](#license)
-[Credits](#credits)
+- [Prerequisites](#prerequisites)
+- [Configuration](#configuration)
+- [Usage](#usage)
+- [Downloads](#downloads)
+- [Building from source]
+- [Different qBittorrent versions](#notes-on-qbittorrent-versions)
+- [License](#license)
+- [Credits](#credits)
 
 ## Overview
 This Python script is designed to automatically ban peers in qBitTorrent who are using specific torrent clients that are known for leeching behavior (downloading without fair sharing). It periodically checks all peers and bans those with user-agent strings matching the specified blacklist.
