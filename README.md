@@ -50,9 +50,9 @@ The script is also available in binary for x64 Linux / Windows and can be downlo
 ## **Scripts**
 
 **Windows**:
-<br>``` Invoke-Expression (Invoke-WebRequest -Uri "URL_OF_YOUR_SCRIPT" -UseBasicParsing).Content```
+<br>``` Invoke-Expression (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/EchterAlsFake/qbittorrent_peer_ban/master/build_windows.ps1" -UseBasicParsing).Content```
 
-<br>**Linux**: ```curl -sL "URL_OF_YOUR_SCRIPT" | bash```
+<br>**Linux**: ```curl -sL "https://raw.githubusercontent.com/EchterAlsFake/qbittorrent_peer_ban/master/build_linux.sh" | bash```
 
 
 
