@@ -6,7 +6,7 @@
 - [Configuration](#configuration)
 - [Usage](#usage)
 - [Downloads](#downloads)
-- [Building from source]
+- [Building from source](#building-from-source)
 - [Different qBittorrent versions](#notes-on-qbittorrent-versions)
 - [License](#license)
 - [Credits](#credits)
