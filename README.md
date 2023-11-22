@@ -1,5 +1,16 @@
 # qBitTorrent Peer Ban Script
 
+# Table of Contents
+
+- [Prerequisites](#prerequisites)
+- [Configuration](#configuration)
+- [Usage](#usage)
+- [Downloads](#downloads)
+- [Building from source](#building-from-source)
+- [Different qBittorrent versions](#notes-on-qbittorrent-versions)
+- [License](#license)
+- [Credits](#credits)
+
 ## Overview
 This Python script is designed to automatically ban peers in qBitTorrent who are using specific torrent clients that are known for leeching behavior (downloading without fair sharing). It periodically checks all peers and bans those with user-agent strings matching the specified blacklist.
 
@@ -23,6 +34,25 @@ This Python script is designed to automatically ban peers in qBitTorrent who are
 # Downloads
 
 The script is also available in binary for x64 Linux / Windows and can be downloaded in the [releases](https://github.com/EchterAlsFake/qbittorrent_peer_ban/releases/tag/1.0)
+
+# Building from Source
+
+### **Supported Platforms**
+
+* Windows
+* Linux
+
+### **Build requirements**
+
+* Python3
+* git
+
+## **Scripts**
+
+**Windows**:
+<br>``` Invoke-Expression (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/EchterAlsFake/qbittorrent_peer_ban/master/build_windows.ps1" -UseBasicParsing).Content```
+
+<br>**Linux**: ```curl -sL "https://raw.githubusercontent.com/EchterAlsFake/qbittorrent_peer_ban/master/build_linux.sh" | bash```
 
 
 
