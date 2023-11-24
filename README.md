@@ -2,6 +2,7 @@
 
 # Table of Contents
 
+- [Features](#features)
 - [Prerequisites](#prerequisites)
 - [Configuration](#configuration)
 - [Usage](#usage)
@@ -11,25 +12,31 @@
 - [License](#license)
 - [Credits](#credits)
 
-## Overview
-This Python script is designed to automatically ban peers in qBitTorrent who are using specific torrent clients that are known for leeching behavior (downloading without fair sharing). It periodically checks all peers and bans those with user-agent strings matching the specified blacklist.
+# Features
+
+- Ban Peers by their client name
+- Ban Peers by their country code
+- (optional) VPN detection to prevent false positives
+- Authentication support
+- Nice and easy configuration menu
+- persistent settings
+
+
 
 ## Prerequisites
 - Python 3.x
 - `requests` library in Python (install via `pip install requests`)
 - `colorama` library in Python (install via `pip install colorama`)
+- `qbittorrent-api` library in Python (install via `pip install qbittorrent-api`)
+- `hue_shift` library in Python (install via `pip install hue_shift`)
 - qBitTorrent with the Web UI enabled
 
 ## Configuration
-1. **API Endpoint**: Set the qBitTorrent API endpoint in the script. By default, it's set to `http://127.0.0.1:8080/api/v2`. (You don't need to change anything if you leave it on default)
-2. **Authentication**: Enable Authentication for clients on the localhost in the Webinterface settings
-3. **Blacklist Keywords**: Customize the blacklist in the script to add or remove client identifiers. The default blacklist includes "Xunlei", "XL00", "^7\.", "BitComet", and "BC".
-   - Note: BitComet is included due to observed leeching behavior, but this is mostly with older versions. Adjust the blacklist as needed.
-
+The script will ask you for everything and explain everything. <br>If you still have questions, feel free to use the discussion tab.
 ## Usage
 1. Ensure qBitTorrent's Web UI is enabled and configured.
 2. Run the script: `python path/to/main.py`
-3. The script will check all peers every 5 seconds and ban those matching the blacklist.
+3. The script will check all peers every 5 seconds and ban those matching the blacklist / country codes.
 
 # Downloads
 
@@ -59,6 +66,10 @@ The script is also available in binary for x64 Linux / Windows and can be downlo
 
 
 ## Notes on qBitTorrent Versions
+
+> Only for Legacy usage! The v2 supports both versions.
+
+
 - The script is set up for qBitTorrent 4.5.x and later versions. If you are using qBitTorrent version 4.4.x, you need to modify the `ban_peer` function in the script.
   - Uncomment the line for 4.4.x and comment out the line for 4.5.x in the `ban_peer` function.
 - Ensure that 'bypass authentication for clients on localhost' is enabled in qBitTorrent's Web UI settings if you don't want to set up authentication for the API.

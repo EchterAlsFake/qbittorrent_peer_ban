@@ -1,0 +1,4 @@
+requests
+colorama
+qbittorrent-api
+hue_shift
