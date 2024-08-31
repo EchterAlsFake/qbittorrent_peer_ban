@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Although I haven't updated anything here the last months, this whole project **still works**.
+
 # qBitTorrent Peer Ban Script
 
 # Table of Contents
