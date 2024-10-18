@@ -2,3 +2,4 @@ requests
 colorama
 qbittorrent-api
 hue_shift
+configparser-override

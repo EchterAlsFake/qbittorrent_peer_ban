@@ -18,6 +18,8 @@ import sys
 import qbittorrentapi
 import getpass
 import os
+import argparse
+from configparser_override import ConfigParserOverride
 
 from configparser import ConfigParser
 from datetime import datetime
@@ -185,7 +187,7 @@ class V2():
     version.
     """
 
-    def __init__(self):
+    def __init__(self, start=False):
 
         try:
             if not check_config_integrity():
@@ -197,13 +199,18 @@ class V2():
             self.conn_info = None
             self.vpn_detection = None
             self.country_codes = None
-            self.conf = ConfigParser()
-            self.conf.read("config.ini")
+            self.parser = ConfigParserOverride(env_prefix="QPB_")
+            self.parser.read("config.ini")
+            self.parser.apply_overrides()
+            self.conf = self.parser.config
             self.load_user_settings()
 
             if self.authentication():
-                while True:
-                    self.menu()
+                if start:
+                    self.start()
+                else:
+                    while True:
+                        self.menu()
 
     def menu(self):
         options = input(f"""
@@ -523,7 +530,8 @@ This will require an API key from iphub.info. You can get 1000 requests a day fo
         port = peer.get("port", "")
         country_code = peer.get("country_code", "")
 
-        if self.ban_by_blacklist and any(item in client_name for item in self.blacklists):
+        if self.ban_by_blacklist and any(re.search(pattern, client_name) for pattern in self.blacklists):
+            print(f"{z}{Fore.RESET}[{datetime.now()}] Banning {ip} because of his client '{client_name}'")
             self.ban_peer(ip, port, client_name)
 
         if self.ban_by_country:
@@ -587,35 +595,44 @@ This will require an API key from iphub.info. You can get 1000 requests a day fo
             }
 
 
-version_input = input(f"""
-{Fore.LIGHTWHITE_EX}Which Version do you want to use?
+# Get desired version from command line
+parser=argparse.ArgumentParser(description="")
+parser.add_argument("version", nargs='?', choices=['', 'v1', 'v2'], default="")
+parser.add_argument("-s", "--start", action="store_true")
+args=parser.parse_args()
 
-{Fore.LIGHTMAGENTA_EX}1) Legacy V1.0 
+version = args.version[1] if args.version else None
+    
+if not version:
+    version_input = input(f"""
+    {Fore.LIGHTWHITE_EX}Which Version do you want to use?
 
-{Fore.LIGHTRED_EX}- No authentication support
-{Fore.LIGHTYELLOW_EX}- Uses web requests to do stuff
-{Fore.LIGHTGREEN_EX}- simpler, more lightweight
+    {Fore.LIGHTMAGENTA_EX}1) Legacy V1.0 
+
+    {Fore.LIGHTRED_EX}- No authentication support
+    {Fore.LIGHTYELLOW_EX}- Uses web requests to do stuff
+    {Fore.LIGHTGREEN_EX}- simpler, more lightweight
 
 
 
-{Fore.LIGHTCYAN_EX}2) New V2.0
+    {Fore.LIGHTCYAN_EX}2) New V2.0
 
-{Fore.LIGHTGREEN_EX}- Authentication support (Username, Password)
-{Fore.LIGHTGREEN_EX}- Uses qbittorrent Python library
-{Fore.LIGHTGREEN_EX}- more robust, stable and future-proof
-{Fore.LIGHTGREEN_EX}- Ban peers by country code
-{Fore.LIGHTGREEN_EX}- VPN detection
-{Fore.LIGHTGREEN_EX}- Settings and persistent configuration
-{Fore.LIGHTRED_EX}- maybe less lightweight
-{Fore.LIGHTRED_EX}- not as fast as Legacy
+    {Fore.LIGHTGREEN_EX}- Authentication support (Username, Password)
+    {Fore.LIGHTGREEN_EX}- Uses qbittorrent Python library
+    {Fore.LIGHTGREEN_EX}- more robust, stable and future-proof
+    {Fore.LIGHTGREEN_EX}- Ban peers by country code
+    {Fore.LIGHTGREEN_EX}- VPN detection
+    {Fore.LIGHTGREEN_EX}- Settings and persistent configuration
+    {Fore.LIGHTRED_EX}- maybe less lightweight
+    {Fore.LIGHTRED_EX}- not as fast as Legacy
 
-{return_color()}---------------[2]--->:{reset()}""")
+    {return_color()}---------------[2]--->:{reset()}""")
 
-version = version_input if version_input else "2"
+    version = version_input if version_input else "2"
 
 if version == "1":
     Legacy()
 
 elif version == "2":
-    V2()
+    V2(start=args.start)
 
