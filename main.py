@@ -204,13 +204,13 @@ class V2():
             self.parser.apply_overrides()
             self.conf = self.parser.config
             self.load_user_settings()
-
-            if self.authentication():
-                if start:
-                    self.start()
-                else:
-                    while True:
-                        self.menu()
+            self.authentication()
+            
+            if start:
+                self.start()
+            else:
+                while True:
+                    self.menu()
 
     def menu(self):
         options = input(f"""
@@ -484,31 +484,44 @@ This will require an API key from iphub.info. You can get 1000 requests a day fo
         time.sleep(1)
 
     def authentication(self):
-
-        try:
-            self.client = qbittorrentapi.Client(**self.conn_info)
-            print(f"{z}{return_color()}Successfully authenticated!{reset()}")
-            return True
-
-        except qbittorrentapi.LoginFailed as e:
-            logger_error(f"{z}Login Failed: {e}{reset()}")
-            self.authentication()
-
+        self.client = qbittorrentapi.Client(**self.conn_info)
+        return True
+        
     def start(self):
-        print(f"{z}{return_color()}Searching for peers every 5 seconds...{reset()}")
-        print(f"{z}{return_color()}Blacklist: {self.conf['Blacklist']['blacklist']}{reset()}")
-        print(f"{z}{return_color()}Countries: {self.conf['Country']['country']}{reset()}")
+
         ignored_ips = []
         vpn_checked_ips = {}
         session = self.create_session()
 
         while True:
-            torrents = self.client.torrents_info()
-            for torrent in torrents:
-                self.process_torrent_peers(torrent, session, ignored_ips, vpn_checked_ips)
+            try:
+                # Call anything to make sure we can log-in
+                version = self.client.app_version()
+                print(f"{z}{return_color()}Successfully authenticated to qbittorrent {version} ...{reset()}")
+                print(f"{z}{return_color()}Searching for peers every 5 seconds...{reset()}")
+                print(f"{z}{return_color()}Blacklist: {self.conf['Blacklist']['blacklist']}{reset()}")
+                print(f"{z}{return_color()}Countries: {self.conf['Country']['country']}{reset()}")
+                
+                while True:
+                    torrents = self.client.torrents_info()
+                    for torrent in torrents:
+                        self.process_torrent_peers(torrent, session, ignored_ips, vpn_checked_ips)
+                    time.sleep(5)
 
-            time.sleep(5)
-
+            except qbittorrentapi.exceptions.Forbidden403Error as e:
+                # I believe this happens when the user has been banned
+                print("Forbidden. Exiting", e)
+                exit(1)
+            except qbittorrentapi.exceptions.LoginFailed as e: 
+                # Exit when login fails to avoid qbittorrent putting a ban on the user for too many failed login attempts
+                print("Login failed. Exiting", e)
+                exit(1)
+            except qbittorrentapi.exceptions.APIConnectionError as e: 
+                # A connection failure may be transient, this will loop
+                print("Connection error, qbittorrent is down?", e)
+                time.sleep(5)
+            
+               
     def create_session(self):
         session = requests.Session()
         session.headers.update({"X-Key": self.api_key})
