@@ -18,6 +18,8 @@ import sys
 import qbittorrentapi
 import getpass
 import os
+import argparse
+from configparser_override import ConfigParserOverride
 
 from configparser import ConfigParser
 from datetime import datetime
@@ -185,7 +187,7 @@ class V2():
     version.
     """
 
-    def __init__(self):
+    def __init__(self, start=False):
 
         try:
             if not check_config_integrity():
@@ -197,11 +199,16 @@ class V2():
             self.conn_info = None
             self.vpn_detection = None
             self.country_codes = None
-            self.conf = ConfigParser()
-            self.conf.read("config.ini")
+            self.parser = ConfigParserOverride(env_prefix="QPB_")
+            self.parser.read("config.ini")
+            self.parser.apply_overrides()
+            self.conf = self.parser.config
             self.load_user_settings()
-
-            if self.authentication():
+            self.authentication()
+            
+            if start:
+                self.start()
+            else:
                 while True:
                     self.menu()
 
@@ -477,31 +484,44 @@ This will require an API key from iphub.info. You can get 1000 requests a day fo
         time.sleep(1)
 
     def authentication(self):
-
-        try:
-            self.client = qbittorrentapi.Client(**self.conn_info)
-            print(f"{z}{return_color()}Successfully authenticated!{reset()}")
-            return True
-
-        except qbittorrentapi.LoginFailed as e:
-            logger_error(f"{z}Login Failed: {e}{reset()}")
-            self.authentication()
-
+        self.client = qbittorrentapi.Client(**self.conn_info)
+        return True
+        
     def start(self):
-        print(f"{z}{return_color()}Searching for peers every 5 seconds...{reset()}")
-        print(f"{z}{return_color()}Blacklist: {self.conf['Blacklist']['blacklist']}{reset()}")
-        print(f"{z}{return_color()}Countries: {self.conf['Country']['country']}{reset()}")
+
         ignored_ips = []
         vpn_checked_ips = {}
         session = self.create_session()
 
         while True:
-            torrents = self.client.torrents_info()
-            for torrent in torrents:
-                self.process_torrent_peers(torrent, session, ignored_ips, vpn_checked_ips)
+            try:
+                # Call anything to make sure we can log-in
+                version = self.client.app_version()
+                print(f"{z}{return_color()}Successfully authenticated to qbittorrent {version} ...{reset()}")
+                print(f"{z}{return_color()}Searching for peers every 5 seconds...{reset()}")
+                print(f"{z}{return_color()}Blacklist: {self.conf['Blacklist']['blacklist']}{reset()}")
+                print(f"{z}{return_color()}Countries: {self.conf['Country']['country']}{reset()}")
+                
+                while True:
+                    torrents = self.client.torrents_info()
+                    for torrent in torrents:
+                        self.process_torrent_peers(torrent, session, ignored_ips, vpn_checked_ips)
+                    time.sleep(5)
 
-            time.sleep(5)
-
+            except qbittorrentapi.exceptions.Forbidden403Error as e:
+                # I believe this happens when the user has been banned
+                print("Forbidden. Exiting", e)
+                exit(1)
+            except qbittorrentapi.exceptions.LoginFailed as e: 
+                # Exit when login fails to avoid qbittorrent putting a ban on the user for too many failed login attempts
+                print("Login failed. Exiting", e)
+                exit(1)
+            except qbittorrentapi.exceptions.APIConnectionError as e: 
+                # A connection failure may be transient, this will loop
+                print("Connection error, qbittorrent is down?", e)
+                time.sleep(5)
+            
+               
     def create_session(self):
         session = requests.Session()
         session.headers.update({"X-Key": self.api_key})
@@ -523,7 +543,8 @@ This will require an API key from iphub.info. You can get 1000 requests a day fo
         port = peer.get("port", "")
         country_code = peer.get("country_code", "")
 
-        if self.ban_by_blacklist and any(item in client_name for item in self.blacklists):
+        if self.ban_by_blacklist and any(re.search(pattern, client_name) for pattern in self.blacklists):
+            print(f"{z}{Fore.RESET}[{datetime.now()}] Banning {ip} because of his client '{client_name}'")
             self.ban_peer(ip, port, client_name)
 
         if self.ban_by_country:
@@ -587,35 +608,44 @@ This will require an API key from iphub.info. You can get 1000 requests a day fo
             }
 
 
-version_input = input(f"""
-{Fore.LIGHTWHITE_EX}Which Version do you want to use?
+# Get desired version from command line
+parser=argparse.ArgumentParser(description="")
+parser.add_argument("version", nargs='?', choices=['', 'v1', 'v2'], default="")
+parser.add_argument("-s", "--start", action="store_true")
+args=parser.parse_args()
 
-{Fore.LIGHTMAGENTA_EX}1) Legacy V1.0 
+version = args.version[1] if args.version else None
+    
+if not version:
+    version_input = input(f"""
+    {Fore.LIGHTWHITE_EX}Which Version do you want to use?
 
-{Fore.LIGHTRED_EX}- No authentication support
-{Fore.LIGHTYELLOW_EX}- Uses web requests to do stuff
-{Fore.LIGHTGREEN_EX}- simpler, more lightweight
+    {Fore.LIGHTMAGENTA_EX}1) Legacy V1.0 
+
+    {Fore.LIGHTRED_EX}- No authentication support
+    {Fore.LIGHTYELLOW_EX}- Uses web requests to do stuff
+    {Fore.LIGHTGREEN_EX}- simpler, more lightweight
 
 
 
-{Fore.LIGHTCYAN_EX}2) New V2.0
+    {Fore.LIGHTCYAN_EX}2) New V2.0
 
-{Fore.LIGHTGREEN_EX}- Authentication support (Username, Password)
-{Fore.LIGHTGREEN_EX}- Uses qbittorrent Python library
-{Fore.LIGHTGREEN_EX}- more robust, stable and future-proof
-{Fore.LIGHTGREEN_EX}- Ban peers by country code
-{Fore.LIGHTGREEN_EX}- VPN detection
-{Fore.LIGHTGREEN_EX}- Settings and persistent configuration
-{Fore.LIGHTRED_EX}- maybe less lightweight
-{Fore.LIGHTRED_EX}- not as fast as Legacy
+    {Fore.LIGHTGREEN_EX}- Authentication support (Username, Password)
+    {Fore.LIGHTGREEN_EX}- Uses qbittorrent Python library
+    {Fore.LIGHTGREEN_EX}- more robust, stable and future-proof
+    {Fore.LIGHTGREEN_EX}- Ban peers by country code
+    {Fore.LIGHTGREEN_EX}- VPN detection
+    {Fore.LIGHTGREEN_EX}- Settings and persistent configuration
+    {Fore.LIGHTRED_EX}- maybe less lightweight
+    {Fore.LIGHTRED_EX}- not as fast as Legacy
 
-{return_color()}---------------[2]--->:{reset()}""")
+    {return_color()}---------------[2]--->:{reset()}""")
 
-version = version_input if version_input else "2"
+    version = version_input if version_input else "2"
 
 if version == "1":
     Legacy()
 
 elif version == "2":
-    V2()
+    V2(start=args.start)
 

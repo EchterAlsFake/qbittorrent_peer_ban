@@ -1,0 +1,23 @@
+services:
+  qbittorrent-peer-ban:
+    # depends_on:
+    #   qbittorrent:
+    #     condition: service_started
+    build: https://github.com/EchterAlsFake/qbittorrent_peer_ban.git
+    container_name: qbittorrent-peer-ban
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - QPB_WebUi__username=admin
+      - QPB_WebUi__password=
+      - QPB_WebUi__host=http://127.0.0.1
+      - QPB_WebUi__port=8080
+      - QPB_Blacklist__blacklist="XunLei,XL00,^7\.,BC,Unknown"
+      - QPB_Blacklist__enabled=true
+      - QPB_Country__country=
+      - QPB_Country__vpn_detection=false
+      - QPB_Country__enabled=false
+      - QPB_Country__api_key=
+      - QPB_APP__first_run=false
+    # restart: unless-stopped
+    network_mode: host
